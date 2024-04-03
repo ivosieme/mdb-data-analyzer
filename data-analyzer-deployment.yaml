@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-analyzer
+  namespace: mdb
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: data-analyzer
+  template:
+    metadata:
+      labels:
+        app: data-analyzer
+    spec:
+      containers:
+        - name: data-analyzer
+          image: ghcr.io/ivosieme/data-analyzer:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8466
+          env:
+            - name: APP_ENV
+              value: 'prod'
+          resources:
+            requests:
+              cpu: "150m"  # Requesting millicores
+              memory: "512Mi"
+            limits:
+              cpu: "320m"
+              memory: "1024Mi"
+      imagePullSecrets:
+        - name: ghcr-creds
