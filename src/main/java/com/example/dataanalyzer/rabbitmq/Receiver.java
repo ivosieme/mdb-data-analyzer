@@ -20,9 +20,15 @@ public class Receiver {
 
     public void receiveMessage(String message) {
         System.out.println("Received <" + message + ">");
-        fetchData(message);
+        String stockSymbol = extractStockSymbol(message);
+        if (stockSymbol != null) {
+            fetchData(stockSymbol);
+        } else {
+            System.out.println("Message format error, no stock symbol found.");
+        }
         latch.countDown();
     }
+
 
     private void fetchData(String stockSymbol) {
         String url = stockApiUrl + stockSymbol;
@@ -32,6 +38,14 @@ public class Receiver {
         } else {
             System.out.println("Failed to fetch data for stock symbol: " + stockSymbol);
         }
+    }
+
+    // Extracts the stock symbol from the message
+    private String extractStockSymbol(String message) {
+        if (message != null && message.startsWith("UPDATE:")) {
+            return message.substring(7); // 7 is the length of "UPDATE:"
+        }
+        return null;
     }
 
     public CountDownLatch getLatch() {
