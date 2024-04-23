@@ -18,6 +18,10 @@ public class Receiver {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     *
+     * @param message
+     */
     public void receiveMessage(String message) {
         System.out.println("Received <" + message + ">");
         String stockSymbol = extractStockSymbol(message);
@@ -29,13 +33,19 @@ public class Receiver {
         latch.countDown();
     }
 
-
+    /**
+     *  Fetching the stock data
+     * @param stockSymbol
+     */
     private void fetchData(String stockSymbol) {
         String url = stockApiUrl + stockSymbol;
         try {
             StockSymbol stock = restTemplate.getForObject(url, StockSymbol.class);
             if (stock != null) {
-                System.out.println("Fetched Stock: " + stock.getName() + " - Last Sale: " + stock.getLastSale());
+                float volatilityIndex = calculateVolatilityIndex(stock.getLastSale(), stock.getHighSale(), stock.getLowSale());
+                stock.setVolatilityIndex(volatilityIndex);
+                System.out.println("Fetched Stock: " + stock.getName() + " - Last Sale: " + stock.getLastSale() + " - Volatility Index: " + stock.getVolatilityIndex());
+                updateStockData(stock);
             } else {
                 System.out.println("No data found for stock symbol: " + stockSymbol);
             }
@@ -44,13 +54,48 @@ public class Receiver {
         }
     }
 
-    // Extracts the stock symbol from the message
+
+    /**
+     *
+     * @param stock
+     */
+    private void updateStockData(StockSymbol stock) {
+        String url = stockApiUrl + stock.getSymbol(); // Assuming the URL needs the stock symbol to update the correct entry
+        try {
+            restTemplate.put(url, stock); // Sending a PUT request to update the stock data
+            System.out.println("Updated Stock: " + stock.getSymbol() + " - Volatility Index set to " + stock.getVolatilityIndex());
+        } catch (Exception e) {
+            System.out.println("Failed to update data for stock symbol: " + stock.getSymbol() + "; Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Extracts the stock symbol from the message
+     * @param message
+     * @return
+     */
     private String extractStockSymbol(String message) {
         if (message != null && message.startsWith("UPDATE:")) {
             return message.substring(7); // 7 is the length of "UPDATE:"
         }
         return null;
     }
+
+    /**
+     * calculates the volatility of a stock
+     * @param lastSale
+     * @param highSale
+     * @param lowSale
+     * @return
+     */
+    private float calculateVolatilityIndex(float lastSale, float highSale, float lowSale) {
+        if (highSale == lowSale) return 0; // Avoid division by zero
+        float midpoint = (highSale + lowSale) / 2;
+        float range = highSale - lowSale;
+        float distanceFromMidpoint = Math.abs(midpoint - lastSale);
+        return 100 * (1 - (distanceFromMidpoint / range)); // Closer to midpoint implies less volatility
+    }
+
 
     public CountDownLatch getLatch() {
         return latch;
