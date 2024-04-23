@@ -32,11 +32,15 @@ public class Receiver {
 
     private void fetchData(String stockSymbol) {
         String url = stockApiUrl + stockSymbol;
-        StockSymbol stock = restTemplate.getForObject(url, StockSymbol.class);
-        if (stock != null) {
-            System.out.println("Fetched Stock: " + stock.getName() + " - Last Sale: " + stock.getLastSale());
-        } else {
-            System.out.println("Failed to fetch data for stock symbol: " + stockSymbol);
+        try {
+            StockSymbol stock = restTemplate.getForObject(url, StockSymbol.class);
+            if (stock != null) {
+                System.out.println("Fetched Stock: " + stock.getName() + " - Last Sale: " + stock.getLastSale());
+            } else {
+                System.out.println("No data found for stock symbol: " + stockSymbol);
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to fetch data for stock symbol: " + stockSymbol + "; Error: " + e.getMessage());
         }
     }
 
