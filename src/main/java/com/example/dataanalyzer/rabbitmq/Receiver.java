@@ -45,7 +45,10 @@ public class Receiver {
                 float volatilityIndex = calculateVolatilityIndex(stock.getLastSale(), stock.getHighSale(), stock.getLowSale());
                 stock.setVolatilityIndex(volatilityIndex);
                 System.out.println("Fetched Stock: " + stock.getName() + " - Last Sale: " + stock.getLastSale() + " - Volatility Index: " + stock.getVolatilityIndex());
-                updateStockData(stock);
+
+                if (volatilityIndex > 0.00) {
+                    updateStockData(stock);
+                }
             } else {
                 System.out.println("No data found for stock symbol: " + stockSymbol);
             }
